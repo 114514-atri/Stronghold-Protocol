@@ -37,6 +37,20 @@ class HttpError extends Error {
 
 function fmtMB(n) { return (n / 1048576).toFixed(1) + ' MB'; }
 
+/**
+ * Lines for the friend-facing download window (`SP_ASSET_WINDOW=1`, 下载素材.bat).
+ * `bytes` is how much this run actually transferred, not files already on disk.
+ * @param {{ done: number, total: number, bytes: number, secs: number, ok: number, skip: number, error: number }} s
+ */
+export function assetWindowStatus(s) {
+  const amount = fmtMB(s.bytes);
+  const speed = (s.bytes / 1048576 / Math.max(0.001, s.secs)).toFixed(1);
+  return {
+    line: `当前下载量 ${amount}    文件 ${s.done}/${s.total}    速度 ${speed} MB/s    新下 ${s.ok}  已有 ${s.skip}  失败 ${s.error}`,
+    title: `卫戍协议 已下载 ${amount}  (${s.done}/${s.total})`,
+  };
+}
+
 export class Downloader {
   /**
    * @param {object} o
@@ -256,14 +270,24 @@ export class Downloader {
     const t0 = Date.now();
     let done = 0; let bytes = 0; let lastLog = 0;
     const counts = { ok: 0, skip: 0, miss: 0, error: 0 };
+    const windowMode = process.env.SP_ASSET_WINDOW === '1';
     const progress = (force) => {
       const now = Date.now();
       if (!force && now - lastLog < 2000) return;
       lastLog = now;
       const secs = Math.max(0.001, (now - t0) / 1000);
-      this.log(`[${label}] ${done}/${unique.length} ok=${counts.ok} skip=${counts.skip} miss=${counts.miss} err=${counts.error} ` +
-        `${fmtMB(bytes)} ${(bytes / 1048576 / secs).toFixed(2)} MB/s`);
+      if (windowMode) {
+        const status = assetWindowStatus({
+          done, total: unique.length, bytes, secs, ok: counts.ok, skip: counts.skip, error: counts.error,
+        });
+        this.log(status.line);
+        process.title = status.title;
+      } else {
+        this.log(`[${label}] ${done}/${unique.length} ok=${counts.ok} skip=${counts.skip} miss=${counts.miss} err=${counts.error} ` +
+          `${fmtMB(bytes)} ${(bytes / 1048576 / secs).toFixed(2)} MB/s`);
+      }
     };
+    if (windowMode && unique.length) process.title = assetWindowStatus({ done: 0, total: unique.length, bytes: 0, secs: 1, ok: 0, skip: 0, error: 0 }).title;
     let next = 0;
     const worker = async () => {
       while (next < unique.length) {
