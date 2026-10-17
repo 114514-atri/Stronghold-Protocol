@@ -384,7 +384,7 @@ function skillTextNote(sk) {
   return note ? html`<p class="dhint dhint--rule" data-skill-note=${sk.skillId}><${Icon} name="info" />${t(note)}</p>` : null;
 }
 
-export function ChessDetail({ chess, piece, unit, snapHp, editable, onSell, bonds, offBonds = null, loadout, onBond, live = null, hint = null, unitItems = null, standIn = null, diy = null, cultOpts = null }) {
+export function ChessDetail({ chess, piece, unit, snapHp, editable, onSell, bonds, offBonds = null, loadout, onBond, live = null, hint = null, unitItems = null, standIn = null, diy = null, cultOpts = null, equipCap = 2 }) {
   const m = data.get('assets');
   const hp = hpOf(live, snapHp);
   // 0.2.0 自选编队: `chess` is then the composed 自选 record (the operator, the slot's tier / price); its skill and module are
@@ -469,8 +469,10 @@ export function ChessDetail({ chess, piece, unit, snapHp, editable, onSell, bond
       </div>
     <//>` : null;
   // (a 变形同构体 / bond item row shows its pairing against what this operator carries: ItemRow `carried`)
-  blocks.equip = piece?.kind === 'chess' ? html`<${Section} key="equip" title=${t('装备')} micro=${`EQUIP ${items.length}/2`} class="dsec--equip">
-      ${items.length ? items.map((it) => html`<${ItemRow} key=${it.uid} itemId=${it.id} carried=${items} off=${offBonds} />`) : html`<p class="t-dim dempty">${t('拖拽装备至该干员以配发（最多 2 件）')}</p>`}
+  // solo practice may raise equipCap above the official 2 (m.private.equipCap)
+  const cap = Number.isInteger(equipCap) && equipCap >= 1 ? equipCap : 2;
+  blocks.equip = piece?.kind === 'chess' ? html`<${Section} key="equip" title=${t('装备')} micro=${`EQUIP ${items.length}/${cap}`} class="dsec--equip">
+      ${items.length ? items.map((it) => html`<${ItemRow} key=${it.uid} itemId=${it.id} carried=${items} off=${offBonds} />`) : html`<p class="t-dim dempty">${t('拖拽装备至该干员以配发（最多 {n} 件）', { n: cap })}</p>`}
     <//>`
     // no own piece (a teammate's unit, a bond popup's 变形同构体 row): what it carries, read-only
     : !piece && carried.length ? html`<${Section} key="equip" title=${t('装备')} micro=${`EQUIP ${carried.length}/2`} class="dsec--equip">
@@ -496,7 +498,7 @@ export function ChessDetail({ chess, piece, unit, snapHp, editable, onSell, bond
  * 变形同构体 lists its pairings (its 天赋栏: MorphPairings, `offBonds` marks 本局禁用); a bond item says which bond it gives
  * a 变形同构体 wearer (MorphGrantLine). (An equipped item is shown on its wearer's card: ChessDetail's 装备 rows.)
  */
-export function ItemDetail({ item, piece, editable, onDestroy, offBonds = null }) {
+export function ItemDetail({ item, piece, editable, onDestroy, offBonds = null, equipCap = 2 }) {
   const m = data.get('assets');
   return html`
     <div class="dhead dhead--item">
@@ -514,7 +516,7 @@ export function ItemDetail({ item, piece, editable, onDestroy, offBonds = null }
     ${item.note ? html`<p class="dhint dhint--rule"><${Icon} name="info" />${item.note}</p>` : null}
     ${item.itemType === 'MAGIC'
       ? html`<p class="dhint"><${Icon} name="info" />${t('将其拖拽至战场上的格子使用')}</p>`
-      : html`<p class="dhint"><${Icon} name="info" />${t('拖拽至干员身上进行配发（每名干员最多 2 件，配发后无法取下）')}${item.mergeable ? t('；2 件相同装备自动合成进阶装备') : ''}</p>`}
+      : html`<p class="dhint"><${Icon} name="info" />${t('拖拽至干员身上进行配发（每名干员最多 {n} 件，配发后无法取下）', { n: Number.isInteger(equipCap) && equipCap >= 1 ? equipCap : 2 })}${item.mergeable ? t('；2 件相同装备自动合成进阶装备') : ''}</p>`}
     ${item.shopExcluded ? html`<p class="dhint dhint--source"><${Icon} name="info" />${t('调度中心不出售 · 获取途径：{source}', { source: item.shopExcludedBy || t('效果获得') })}</p>` : null}
     ${piece && editable ? html`<div class="dactions"><${Button} variant="danger" onClick=${() => onDestroy(piece, item)}>${t('销毁道具')}<//></div>` : null}`;
 }
@@ -845,7 +847,7 @@ export function selectVoiceKey(detail) {
  *   (the owner's request of 2026-10-08 「添加一下干员点击上去的语气一样的语音」 lifted 2026-10-03's 「整备阶段不需要干员语音」
  *   for this line only; [ASSUMED] the official prep tap says 选中干员 like the battle's FOCUS_CHAR)
  */
-export function DetailPanel({ detail, editable, snapHp, onClose, onSell, onDestroy, bonds = [], offBonds = null, loadout = null, ops = null, onBond = null, side = 'left', shopOpen = false, live = null, voice = false }) {
+export function DetailPanel({ detail, editable, snapHp, onClose, onSell, onDestroy, bonds = [], offBonds = null, loadout = null, ops = null, onBond = null, side = 'left', shopOpen = false, live = null, voice = false, equipCap = 2 }) {
   const getter = typeof live === 'function' ? live : null;
   useTicker(detail && getter ? 250 : 0);
   // 选中干员 voice (audio.voice 'select'): once per opened operator — the panel stays mounted while the target changes,
@@ -878,8 +880,8 @@ export function DetailPanel({ detail, editable, snapHp, onClose, onSell, onDestr
     <div class="dpanel__scroll">
       ${detail.type === 'chess' ? html`<${ChessDetail} chess=${detail.chess} piece=${detail.piece} snapHp=${snapHp} editable=${editable} onSell=${sellIt}
         bonds=${bonds} offBonds=${offBonds} loadout=${loadout} onBond=${onBond} live=${liveNow} hint=${detail.hint || null} unitItems=${detail.unitItems || null}
-        standIn=${detail.standIn || null} diy=${detail.diy || null} cultOpts=${detail.cultOpts || { ops }} />` : null}
-      ${detail.type === 'item' ? html`<${ItemDetail} item=${detail.item} piece=${detail.piece} editable=${editable} onDestroy=${destroyIt} offBonds=${offBonds} />` : null}
+        standIn=${detail.standIn || null} diy=${detail.diy || null} cultOpts=${detail.cultOpts || { ops }} equipCap=${equipCap} />` : null}
+      ${detail.type === 'item' ? html`<${ItemDetail} item=${detail.item} piece=${detail.piece} editable=${editable} onDestroy=${destroyIt} offBonds=${offBonds} equipCap=${equipCap} />` : null}
       ${detail.type === 'enemy' ? html`<${EnemyDetail} enemy=${detail.enemy} snapHp=${snapHp} count=${detail.count} live=${liveNow} />` : null}
       ${detail.type === 'token' ? html`<${TokenDetail} token=${detail.token} piece=${detail.piece} ownerId=${detail.ownerId ?? null} snapHp=${snapHp} live=${liveNow} />` : null}
       ${detail.type === 'terrain' ? html`<${TerrainDetail} terrain=${detail.terrain} />` : null}

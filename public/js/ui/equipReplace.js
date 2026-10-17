@@ -35,7 +35,8 @@ export function replaceRequest(ctx, intent, getChess = () => null, getItem = () 
   const item = ctx?.pieces?.get(intent.fields.itemUid)?.piece;
   if (!isObj(target) || target.kind !== 'chess' || !isObj(item) || item.kind !== 'item') return null;
   const equipped = (Array.isArray(target.items) ? target.items : []).filter((it) => isObj(it) && Number.isInteger(it.uid));
-  if (equipped.length < 2) return null;
+  const cap = Number.isInteger(ctx?.equipCap) && ctx.equipCap >= 1 ? ctx.equipCap : 2;
+  if (equipped.length < cap) return null;
   const rec = (id) => getItem(id) || null;
   const shown = getChess(target.id) || null;
   return {

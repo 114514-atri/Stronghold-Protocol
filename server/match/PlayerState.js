@@ -224,6 +224,8 @@ export class PlayerState {
     this.round = { refreshes: 0, buys: 0, sells: 0, spent: 0, gainedChess: 0, arts: 0 };
     this.deployCapBonus = 0;
     this.deployCapMin = 0;
+    /** Solo practice: override of `gd.equipPerChess` (null = official 2). See MatchDebug.noEquipLimit. */
+    this.debugEquipCap = null;
     this.deviceOverrides = {};
     this.tileOverrides = {};
     this.stats = {

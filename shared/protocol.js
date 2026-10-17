@@ -407,6 +407,15 @@ const target = (v) => {
 };
 
 /** @type {Record<string, Record<string, (v:any)=>boolean> & { $optional?: string[] }>} */
+/** Solo-only debug modifier ops (`g.debug`); co-op always refuses the intent. */
+export const DEBUG_OPS = Object.freeze(new Set([
+  'addFunds', 'setFunds', 'setLp', 'freeRefresh', 'maxShop', 'addDeployCap', 'rerollShop',
+  // bond layers (盟约层数 / 阵营系数): `bondId` optional for addLayers (= every owned bond)
+  'addLayers', 'setLayers',
+  // practice aids: raise equip slots, grant every max-tier elite, free-buy one chess from the full roster
+  'noEquipLimit', 'unlockMaxOps', 'grantChess',
+]));
+
 export const C2S = {
   // session & lobby
   hello: { name: (v) => isStr(v, NAME_MAX_LEN) && v.trim().length > 0, token: (v) => v == null || isStr(v, 64), version: (v) => v == null || isInt(v, 0, 1e6),
@@ -490,6 +499,17 @@ export const C2S = {
   // solo pause (official PauseUp / ResumeUp, DESIGN §14): freezes the running battle (field clock, deadlines, the
   // browser's local runner) — solo matches only (co-op ⇒ WRONG_PHASE), only while a battle runs; m.public.paused
   'g.pause': { on: isBool },
+  // solo debug modifier (local practice aid): solo matches only (co-op ⇒ WRONG_PHASE). Closed set of ops; `n` is the
+  // amount for addFunds / setFunds / setLp / freeRefresh / addDeployCap / addLayers / setLayers (clamps on the server);
+  // `bondId` is for addLayers / setLayers (absent addLayers = every bond the seat currently owns members of);
+  // `chessId` is for grantChess (a visible roster chess, free into hand / temp).
+  'g.debug': {
+    op: (v) => typeof v === 'string' && DEBUG_OPS.has(v),
+    n: (v) => isInt(v, -9999, 9999),
+    bondId: isId,
+    chessId: isId,
+    $optional: ['n', 'bondId', 'chessId'],
+  },
   // the stats the own board's units start their next battle with (user playtest #4 item 7; prep phases): answered by
   // the push m.unitStats { seq, round, units: [unitStatsEntry] }; `seq` is echoed so the client keeps the newest answer
   'g.unitStats': { seq: (v) => isInt(v, 0, 2 ** 31), $optional: ['seq'] },

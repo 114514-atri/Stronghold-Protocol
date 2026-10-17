@@ -92,6 +92,8 @@ export class PlayerViews {
       prepMapChars: this.m.prepMapChars(this),
       deployCap: this.deployCap,
       deployCount: this.deployCount,
+      // solo practice may raise this above the official 2 (MatchDebug.noEquipLimit); clients use it for the replace dialog
+      equipCap: this.equipCap,
       // + the mode-off bonds it has members of (`off: true`, the strip's grey 本局禁用 discs — bondsMeta.offBondCounts)
       bonds: bondList(this.gd, this.bondsView(), { full: true, off: offBondCounts(this.gd, this) }),
       effects: this.effectsView(),

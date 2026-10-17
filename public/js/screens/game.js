@@ -92,6 +92,7 @@ import { EffectsList } from '../ui/effectsList.js';
 import { CombatHud } from '../ui/combatHud.js';
 import { CombatMetricsPanel } from '../ui/combatMetrics.js';
 import { SettingsModal, settingsStore, useSettings } from '../ui/settings.js';
+import { CheatPanel, CheatToggle } from '../ui/cheatPanel.js';
 import { ExitModal, AwayOverlay, awayStore } from '../ui/matchChrome.js';
 import { openGuide } from '../ui/guide.js';
 import { actions, onRefreshBusy } from '../ui/gameActions.js';
@@ -219,6 +220,7 @@ function MatchScreen() {
   useEffect(() => { if (!showMetrics) setMetricsOpen(false); }, [showMetrics]);
   const [emoteOpen, setEmoteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [cheatOpen, setCheatOpen] = useState(false);
   const [exitOpen, setExitOpen] = useState(false);
   const [drag, setDrag] = useState(null);                // { uid, kind, id } while dragging a piece
   const [facing, setFacing] = useState(null);            // direction step: { uid, piece, row, col, grid, name }
@@ -1637,6 +1639,10 @@ function MatchScreen() {
             setSel(null);
             setBondOpen(null);
           }}><${Icon} name="signal" /></button>` : null}
+        ${solo && !spectator ? html`<${CheatToggle} open=${cheatOpen} onToggle=${(v) => {
+          setCheatOpen(v);
+          if (v) { setEmoteOpen(false); setMetricsOpen(false); setDetail(null); setSel(null); setBondOpen(null); }
+        }} />` : null}
         <button type="button" class="gm__gear" aria-label=${t('设置')} title=${t('设置')} onClick=${() => setSettingsOpen(true)}><${GIcon} name="gear" /></button>
         <button type="button" class="gm__gear gm__guide" aria-label=${t('玩法说明')} title=${t('玩法说明')} onClick=${() => openGuide(0)}><${Icon} name="book" /></button>
         <${FullscreenButton} class="gm__gear gm__fs" />
@@ -1653,6 +1659,7 @@ function MatchScreen() {
 
       ${resolved ? html`<${DetailPanel} detail=${resolved} snapHp=${snapHp} onClose=${() => { setDetail(null); setSel(null); }}
         bonds=${detailBonds} offBonds=${offBonds} loadout=${detailLoadout} ops=${priv?.ops ?? null} side=${dSide} shopOpen=${shopOpen} live=${liveStats} voice=${true}
+        equipCap=${Number.isInteger(priv?.equipCap) && priv.equipCap >= 1 ? priv.equipCap : 2}
         onBond=${(id) => openBond(id, detailOwner, 'detail')} />` : null}
 
       ${selEntry && editable && !facing && !drag && showPrep ? html`<${Underframe} key=${sel.uid} view=${view} uid=${sel.uid}
@@ -1687,6 +1694,7 @@ function MatchScreen() {
       onConfirm=${(uid) => closeReplace(uid)} onCancel=${() => closeReplace(null)} />` : null}
 
     <${SettingsModal} open=${settingsOpen} onClose=${() => setSettingsOpen(false)} />
+    ${solo && !spectator ? html`<${CheatPanel} open=${cheatOpen} onClose=${() => setCheatOpen(false)} priv=${priv} />` : null}
     <${ExitModal} open=${exitOpen} onClose=${() => setExitOpen(false)} solo=${solo} />
   </div>`;
 }

@@ -97,6 +97,15 @@ export const actions = {
   autoplay: (on) => act('g.autoplay', { on }),
   // solo battles only (ui/matchStatus.js pauseAvailable): m.public.paused follows
   pause: (on) => act('g.pause', { on: !!on }, { sfx: on ? 'click' : 'confirm' }),
+  // solo practice modifier only (ui/cheatPanel.js; server refuses co-op). fields: { op, n?, bondId?, chessId? }
+  debug: (fields) => {
+    const f = fields && typeof fields === 'object' ? fields : { op: fields };
+    const body = { op: f.op };
+    if (Number.isInteger(f.n)) body.n = f.n;
+    if (typeof f.bondId === 'string' && f.bondId) body.bondId = f.bondId;
+    if (typeof f.chessId === 'string' && f.chessId) body.chessId = f.chessId;
+    return act('g.debug', body, { sfx: 'confirm' });
+  },
   // room-level intent (NOT g.*): the host frees a spectator seat while the match runs — the server takes room.removeSpectator at
   // any time (server/lobby.js removeSpectator), the game screen had no entry for it (ui/hud.js SpectatorPill; GitHub #120)
   removeSpectator: (playerId) => act('room.removeSpectator', { playerId }, { sfx: 'back' }),

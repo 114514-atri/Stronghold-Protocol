@@ -211,7 +211,8 @@ export function placementContext({ priv, stage, editable, field = 'normal', getC
   const deploy = field === 'bossL' || field === 'bossR'
     ? deploySets(stage, field, ov)
     : deploySets(effectiveStage(stage, ov));
-  return { priv, pieces, boardAt, handAt, deploy, cap, count, field, editable: !!editable, getChess, getToken, getItem, backups };
+  const equipCap = Number.isInteger(priv?.equipCap) && priv.equipCap >= 1 ? priv.equipCap : 2;
+  return { priv, pieces, boardAt, handAt, deploy, cap, count, equipCap, field, editable: !!editable, getChess, getToken, getItem, backups };
 }
 
 /**
@@ -416,7 +417,8 @@ const PROMOTE_KEYS = new Set(['use_equip_upgrade_char', 'equip_round_start_upgra
  * @param {any} targetPiece
  */
 export function equipReplaces(ctx, uid, targetPiece) {
-  if (!Array.isArray(targetPiece?.items) || targetPiece.items.length < 2) return false;
+  const cap = Number.isInteger(ctx?.equipCap) && ctx.equipCap >= 1 ? ctx.equipCap : 2;
+  if (!Array.isArray(targetPiece?.items) || targetPiece.items.length < cap) return false;
   const rec = ctx.getItem(ctx.pieces.get(uid)?.piece?.id);
   if (!consumedOnEquip(rec)) return !equipMerges(ctx, uid);
   const promotes = Array.isArray(rec.buffs) && rec.buffs.some((b) => PROMOTE_KEYS.has(b?.key));

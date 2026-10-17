@@ -204,6 +204,18 @@ always. While paused (`m.public.paused`) the field clocks, the authority deadlin
 fields' `startAt` / `lastProgressAt` and the boss start by the paused time and re-arms the timers. A disconnect or
 `onLeave` resumes; the battle phase ending clears it (`pausedMs` totals the paused time).
 
+### 1.3b Solo practice modifier
+`g.debug { op, n?, bondId?, chessId? }` (`Match.applyDebug`): a local practice aid for **独立模拟 only** (co-op → `WRONG_PHASE 'solo only'`).
+Closed ops: `addFunds` / `setFunds` / `setLp` / `freeRefresh` / `maxShop` / `addDeployCap` / `rerollShop` /
+`addLayers` / `setLayers` (盟约层数 / 阵营系数) / `noEquipLimit` / `unlockMaxOps` / `grantChess`. Economy, shop, layer
+and roster ops need ROUND_START / SP_DRAFT / PREP and refuse when the seat is ready; `setLp` may run any time the seat
+is alive. `addLayers` without `bondId` touches every bond the seat currently owns members of; `setLayers` requires
+`bondId`. `noEquipLimit` raises this seat's equip slots to 16 (`m.private.equipCap`; official is 2). `unlockMaxOps`
+grants one elite of every max-tier visible operator. `grantChess` needs `chessId` (a visible roster chess or its elite)
+and puts it in the hand, overflowing into temp; both grants use `fromPool: false` so the shared pool is untouched.
+The game screen mounts the panel only when `room.mode === 'solo'` (`public/js/ui/cheatPanel.js`); client-only store
+patches are not used — every change goes through the intent and the next `m.private` / `m.public` push.
+
 ### 1.4 Watching fields
 Client-side combat (the default, DESIGN §14 Spectating; `Match._watchClient`): `g.watch` answers with the field's
 `b.start` (a display replica fast-forwarded to the field clock); an alive player may not watch another normal field

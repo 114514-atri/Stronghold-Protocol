@@ -30,6 +30,12 @@ export class PlayerBasics {
   get deployCap() { return Math.max(1, this.gd.deployCap + this.deployCapBonus, this.deployCapMin); }
   get deployCount() { let n = 0; for (const p of this.board.values()) if (p.kind === 'chess') n++; return n; }
   get tempEmpty() { return this.temp.every((x) => x == null); }
+  /** Official equip slots, or the solo-practice override (`debugEquipCap`). */
+  get equipCap() {
+    const o = this.debugEquipCap;
+    if (Number.isInteger(o) && o >= 1) return o;
+    return this.gd.equipPerChess;
+  }
 
   /**
    * Index of the prep whose deadline resolves a temp piece (compare with `prepsEnded`): recorded when the piece entered

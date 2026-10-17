@@ -100,7 +100,8 @@ export function collectViolations(m, { limit = 25 } = {}) {
         const rec = pgd.chess(p.id);
         if (!rec) { fail(`${id}: unknown chess ${p.id}`); continue; }
         if (rec.isDiy && !rec.diyFor) fail(`${id}: owns ${p.id}, a 自选 slot it has not filled`);
-        if (!Array.isArray(p.items) || p.items.length > gd.equipPerChess) fail(`${id}: ${p.id} carries ${p.items && p.items.length} items`);
+        const equipCap = Number.isInteger(ps.debugEquipCap) && ps.debugEquipCap >= 1 ? ps.debugEquipCap : gd.equipPerChess;
+        if (!Array.isArray(p.items) || p.items.length > equipCap) fail(`${id}: ${p.id} carries ${p.items && p.items.length} items`);
         for (const it of p.items || []) {
           note(ps, it);
           if (it.kind !== 'item' || !gd.item(it.id)) fail(`${id}: ${p.id} carries a bad item ${it.kind}:${it.id}`);
