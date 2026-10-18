@@ -3672,7 +3672,12 @@ function buildConfig(ctx, waves, stages, bands, chess, items) {
     economy: {
       income: Array.from({ length: 16 }, (_, r) => (r === 0 ? 0 : Math.min(3 + r, incomeCap))),
       incomeFormula: `min(3 + round, ${incomeCap})`, incomeCap, incomeCapAlternative: 10, incomeAssumedAfterRound: 3,
-      leftoverFundsLost: true, leftoverFundsKeptByBands: ac.constData?.noMoneyTipsBand || ['band_cannot'],
+      leftoverFundsLost: true,
+      // Official noMoneyTipsBand (坎诺特) plus every band with coin_carry_over (fan remake 异客, …).
+      leftoverFundsKeptByBands: [...new Set([
+        ...(Array.isArray(ac.constData?.noMoneyTipsBand) ? ac.constData.noMoneyTipsBand : ['band_cannot']),
+        ...Object.values(bands).filter((b) => (b.buffs || []).some((x) => x && x.key === 'coin_carry_over')).map((b) => b.bandId),
+      ])].sort(),
       chessPrice, chessSell, chessStatus,
       refreshPrice: act.constData.shopRefreshPrice,
       freeze: { scope: 'allUnsoldSlots', price: 0, consumedAtRoundStart: true, refreshWhileFrozenRerollsAll: true, rewardOfferFreezable: false },

@@ -70,14 +70,14 @@ test('bands.js wires both parts: 28 bands with a prep handler, 10 with a battle 
   assert.equal(typeof bands.install, 'function');
   assert.equal(typeof bands.registerMeta, 'function');
   const ids = Object.keys(DATA.bands);
-  assert.equal(ids.length, 44); // 40 official + 4 fan (shared/fanBands.js)
+  assert.equal(ids.length, 48); // 40 official + 8 fan (shared/fanBands.js)
   const meta = ids.filter((id) => REG.has(`band:${id}`));
   const battle = ids.filter(hasBattlePart);
-  assert.equal(meta.length, 29); // + band_angel (prep)
+  assert.equal(meta.length, 31); // + angel / demkni / pasngr (prep)
   assert.deepEqual(battle.sort(), [
     'band_amedic', 'band_amiya', 'band_chen', 'band_clementia', 'band_dusk', 'band_emperor',
-    'band_ermengard', 'band_humus', 'band_ioleta', 'band_mberry', 'band_mudrok', 'band_qalaisa',
-    'band_surtr', 'band_svrash',
+    'band_ermengard', 'band_f12yin', 'band_humus', 'band_ioleta', 'band_mberry', 'band_mudrok',
+    'band_nearl2', 'band_qalaisa', 'band_surtr', 'band_svrash',
   ].sort());
   assert.ok(REG.has('global:bands_ducklord'));
   const none = ids.filter((id) => !meta.includes(id) && !battle.includes(id));
@@ -856,6 +856,56 @@ test('fan 史尔特尔 熔火之心: knock-down ⇒ others ATK +25 % per stack (
   for (let i = 0; i < 8; i++) { kill(a); h.runUntil(() => a.alive, 30); }
   close(c.s.atk, 500 * 2.5, 'max +150 %');
   cover('band_surtr');
+});
+
+test('fan 塞雷娅 医学督导: prep end — per distinct tier, 1 random op\'s bonds +3 layers (华法琳 is +2)', () => {
+  for (let s = 0; s < 6; s++) {
+    const { m, ps, prepEnd } = setup({ band: 'band_demkni', seed: 50 + s });
+    give(m, ps, 'chess_char_1_04_a', 'board', [10, 3]);
+    give(m, ps, 'chess_char_1_09_a', 'board', [10, 4]);
+    give(m, ps, 'chess_char_2_06_a', 'board', [10, 5]);
+    give(m, ps, 'chess_char_3_06_a', 'hand');
+    prepEnd();
+    assert.equal(ps.layers.sargonShip, 3, 'the only T2');
+    assert.equal((ps.layers.egirShip || 0) + (ps.layers.preciShip || 0), 3, 'exactly one of the T1 operators');
+    assert.equal(Object.values(ps.layers).reduce((a, b) => a + b, 0), 6);
+  }
+  cover('band_demkni');
+});
+
+test('fan 山 魁首: n elite operators ⇒ each elite ATK and HP ×(1 + 0.12 n) (伊奥莱塔 is 0.1)', () => {
+  const ops = { t_e1_b: op('t_e1_b', { golden: true }), t_e2_b: op('t_e2_b', { golden: true }), t_n: op('t_n') };
+  const h = fight({ band: 'band_f12yin', ops, units: [{ chessId: 't_e1_b', row: 10, col: 4 }, { chessId: 't_e2_b', row: 11, col: 4 }, { chessId: 't_n', row: 12, col: 4 }] });
+  h.step(1);
+  for (const id of ['t_e1_b', 't_e2_b']) { close(h.unit(id).s.atk, 620, id); close(h.unit(id).s.maxHp, 2480, id); }
+  close(h.unit('t_n').s.atk, 500, 'normal operators unchanged');
+  cover('band_f12yin');
+});
+
+test('fan 异客 过载协议: leftover ≥ 4 ⇒ +1 at round start (坎诺特 needs ≥ 5)', () => {
+  const { m, ps, at } = setup({ band: 'band_pasngr' });
+  ps.funds = 4;
+  ps.endPrep();
+  assert.equal(ps.funds, 4, 'kept at prep end');
+  at(4);
+  ps.startRound(4);
+  assert.equal(ps.funds, 4 + m.gd.income(4) + 1);
+  ps.funds = 3;
+  ps.startRound(5);
+  assert.equal(ps.funds, 3 + m.gd.income(5), 'fewer than 4 left: no interest');
+  cover('band_pasngr');
+});
+
+test('fan 耀骑士临光 荣光: 3 / 4 / ≥ 5 active bonds ⇒ ATK and HP ×1.25 / ×1.35 / ×1.45 (阿米娅 is ×1.2 / ×1.3 / ×1.4)', () => {
+  const ALL = ['yanShip', 'sargonShip', 'victoriaShip', 'kjeragShip', 'lateranoShip', 'egirShip'];
+  for (const [n, mul] of [[2, 1], [3, 1.25], [4, 1.35], [5, 1.45], [6, 1.45]]) {
+    const h = fight({ band: 'band_nearl2', bonds: active(...ALL.slice(0, n)), units: [{ chessId: 't_op', row: 10, col: 4 }] });
+    h.step(1);
+    const u = h.unit('t_op');
+    close(u.s.atk, 500 * mul, `${n} bonds ATK`);
+    close(u.s.maxHp, 2000 * mul, `${n} bonds HP`);
+  }
+  cover('band_nearl2');
 });
 
 test('coverage: every band is exercised by a test above', () => {

@@ -51,7 +51,7 @@ export const DEFAULTS = Object.freeze({
   timers: { infoCheck: 25, bandDraft: 50, bandTurn: 30, battleCheck: 3, spFirst: 30, spTurn: 16 },
   bans: { FUNNY: { core: 0, addon: 1 }, NORMAL: { core: 3, addon: 4 }, HARD: { core: 3, addon: 4 }, ABYSS: { core: 3, addon: 4 } },
   bandDraft: { skipsPerPlayer: 1, timeoutBandId: 'band_bldsk' },
-  leftoverFundsKeptByBands: ['band_cannot'],
+  leftoverFundsKeptByBands: ['band_cannot', 'band_pasngr'],
 });
 
 /** Game seconds per real second of a battle (forced 2×): combat limits in data are real seconds (combatTimeLimit). */
