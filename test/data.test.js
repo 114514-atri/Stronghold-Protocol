@@ -179,7 +179,7 @@ test('items: 115 item chess with valid effects, bonds and golden links', () => {
 });
 
 test('bands: 40 strategies with effects and starting LP', () => {
-  assert.equal(Object.keys(bands).length, 40);
+  assert.equal(Object.keys(bands).length, 44); // 40 official + 4 fan (shared/fanBands.js)
   for (const b of Object.values(bands)) {
     assert.ok(effects[b.effectId], `${b.bandId}: effect`);
     assert.ok(isInt(b.totalHp) && b.totalHp >= 20 && b.totalHp <= 45, `${b.bandId}: totalHp`);

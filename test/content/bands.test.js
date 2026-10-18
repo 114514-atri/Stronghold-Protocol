@@ -1,6 +1,6 @@
-// The 40 strategies (bands): prep side (server/sim/content/bands/meta.js through the real registry + dispatcher) and
-// battle side (bands/battle.js with synthetic operators / enemies for exact numbers). Numbers are the band blackboards
-// (data/bands.json, research 01 §11); every band is covered (last test).
+// The strategies (bands): 40 official + fan remake (`shared/fanBands.js`). Prep side (bands/meta.js through the real
+// registry + dispatcher) and battle side (bands/battle.js). Numbers are the band blackboards (data/bands.json,
+// research 01 §11); every band is covered (last test).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeBattle, chessRec, enemyRec, checkInvariants } from '../helpers/battleHarness.js';
@@ -70,11 +70,15 @@ test('bands.js wires both parts: 28 bands with a prep handler, 10 with a battle 
   assert.equal(typeof bands.install, 'function');
   assert.equal(typeof bands.registerMeta, 'function');
   const ids = Object.keys(DATA.bands);
-  assert.equal(ids.length, 40);
+  assert.equal(ids.length, 44); // 40 official + 4 fan (shared/fanBands.js)
   const meta = ids.filter((id) => REG.has(`band:${id}`));
   const battle = ids.filter(hasBattlePart);
-  assert.equal(meta.length, 28);
-  assert.deepEqual(battle.sort(), ['band_amedic', 'band_amiya', 'band_chen', 'band_clementia', 'band_dusk', 'band_emperor', 'band_ermengard', 'band_humus', 'band_ioleta', 'band_mberry', 'band_qalaisa'].sort());
+  assert.equal(meta.length, 29); // + band_angel (prep)
+  assert.deepEqual(battle.sort(), [
+    'band_amedic', 'band_amiya', 'band_chen', 'band_clementia', 'band_dusk', 'band_emperor',
+    'band_ermengard', 'band_humus', 'band_ioleta', 'band_mberry', 'band_mudrok', 'band_qalaisa',
+    'band_surtr', 'band_svrash',
+  ].sort());
   assert.ok(REG.has('global:bands_ducklord'));
   const none = ids.filter((id) => !meta.includes(id) && !battle.includes(id));
   assert.deepEqual(none.sort(), ['band_ducklord', 'band_sarkazb']);
@@ -795,6 +799,63 @@ test('外勤医疗: 联防右侧 Touch retains its prepared targeting order', ()
   assert.equal(gargoyle.blockedBy, null);
   assert.equal(target, harold);
   checkInvariants(h.b);
+});
+
+test('fan 银灰 战术指挥: every deployment cuts redeploy time by 40 % (reuse 大帝 buff key, −0.4)', () => {
+  const h = fight({ band: 'band_svrash', units: [{ chessId: 't_op', row: 10, col: 4 }] });
+  h.step(1);
+  const u = h.unit('t_op');
+  h.b.kill(u);
+  close(u.respawnAt - h.b.time, 12, 'after the initial deployment (20 × 0.6)');
+  h.runUntil(() => u.alive, 30);
+  h.b.kill(u);
+  close(u.respawnAt - h.b.time, 7.2, 'after the redeployment (20 × 0.6²)');
+  cover('band_svrash');
+});
+
+test('fan 能天使 快速装填: every 15 funds spent ⇒ 1 random operator of tier ≤ shop level', () => {
+  const { ps } = setup({ band: 'band_angel', seed: 21 });
+  ps.shop.level = 2;
+  const grants = spyGrants(ps);
+  const spend = (n) => { ps.spend(n); ps._afterSpend(n, 'test'); };
+  spend(14);
+  assert.equal(grants.length, 0);
+  spend(1);
+  assert.equal(grants.length, 1);
+  ps.funds = 100;
+  spend(30);
+  assert.equal(grants.length, 3);
+  for (const id of grants) assert.ok(DATA.chess[id].tier <= 2 && !DATA.chess[id].isGolden);
+  cover('band_angel');
+});
+
+test('fan 泥岩 磐石壁垒: starting LP 36; right-most column gets a 35 % chance per attack of 1 shield', () => {
+  assert.equal(DATA.bands.band_mudrok.totalHp, 36);
+  const ops = { t_op: op('t_op'), t_b: op('t_b') };
+  for (const [v, want] of [[0.34, 1], [0.36, 0]]) {
+    const h = fight({ band: 'band_mudrok', ops, units: [{ chessId: 't_op', row: 10, col: 7 }, { chessId: 't_b', row: 11, col: 5 }], foes: [[10, 8], [11, 6]] });
+    forceRng(h, v);
+    h.run(3.1);
+    const sh = (u) => { const b = u.findBuff('band:band_mudrok:shield'); return b ? b.shieldHits : 0; };
+    assert.equal(sh(h.unit('t_op')), want, `right-most, rng ${v}`);
+    assert.equal(sh(h.unit('t_b')), 0, 'not right-most');
+  }
+  cover('band_mudrok');
+});
+
+test('fan 史尔特尔 熔火之心: knock-down ⇒ others ATK +25 % per stack (max +150 %)', () => {
+  const ops = { t_a: op('t_a'), t_b: op('t_b'), t_c: op('t_c') };
+  const h = fight({ band: 'band_surtr', ops, units: [{ chessId: 't_a', row: 10, col: 4 }, { chessId: 't_b', row: 11, col: 4 }, { chessId: 't_c', row: 12, col: 4 }], foes: [[10, 9]] });
+  h.step(1);
+  const [a, b, c] = [h.unit('t_a'), h.unit('t_b'), h.unit('t_c')];
+  const kill = (u) => h.b.dealDamage(foe(h), u, { amount: 1e6, type: 'true' });
+  kill(a);
+  close(b.s.atk, 625, '+25 %');
+  kill(b);
+  close(c.s.atk, 750, '+50 %');
+  for (let i = 0; i < 8; i++) { kill(a); h.runUntil(() => a.alive, 30); }
+  close(c.s.atk, 500 * 2.5, 'max +150 %');
+  cover('band_surtr');
 });
 
 test('coverage: every band is exercised by a test above', () => {

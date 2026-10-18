@@ -238,7 +238,7 @@ export function BondGlyph({ bondId, class: cls }) {
 export function BandIcon({ bandId, class: cls, size = 'md' }) {
   const b = data.lookup('bands', bandId);
   return html`<span class=${cx('bandicon', `bandicon--${size}`, cls)} title=${b?.name || ''}>
-    <${Img} src=${bandIconUrl(data.get('assets'), bandId)} fallback=${html`<span class="bandicon__txt">${[...(b?.name || '?')][0]}</span>`} />
+    <${Img} src=${bandIconUrl(data.get('assets'), bandId, b)} fallback=${html`<span class="bandicon__txt">${[...(b?.name || '?')][0]}</span>`} />
   </span>`;
 }
 
@@ -257,7 +257,8 @@ export function RichTip({ text, children, placement = 'top' }) {
  * @param {{ player: any, size?: 'sm'|'md', self?: boolean, class?: string }} props
  */
 export function PlayerAvatar({ player, size = 'md', self = false, class: cls }) {
-  const src = player?.bandId ? bandIconUrl(data.get('assets'), player.bandId) : null;
+  const band = player?.bandId ? data.lookup('bands', player.bandId) : null;
+  const src = player?.bandId ? bandIconUrl(data.get('assets'), player.bandId, band) : null;
   const glyph = [...(player?.name || '').trim()][0] || '?';
   const dead = player?.alive === false || player?.status === 'dead';
   const left = player?.status === 'left';

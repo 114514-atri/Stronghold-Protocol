@@ -45,7 +45,7 @@ describe('assetUrls', () => {
   });
   test('bonds, bands, items, enemies, tokens, factions, titles, effects', () => {
     for (const id of Object.keys(load('bonds.json'))) assert.ok(bondIconUrl(m, id), id);
-    for (const id of Object.keys(load('bands.json'))) assert.ok(bandIconUrl(m, id), id);
+    for (const [id, b] of Object.entries(load('bands.json'))) assert.ok(bandIconUrl(m, id, b), id);
     for (const it of Object.values(load('items.json'))) assert.ok(inManifest(itemIconUrl(m, it)), it.id);
     assert.ok(itemIconUrl(m, Object.values(load('items.json'))[0]));
     const enemies = load('enemies.json');

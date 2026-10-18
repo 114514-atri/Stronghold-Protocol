@@ -51,6 +51,7 @@
 // caller falls back (docs/ASSETS.md "Other fallbacks").
 
 import { cosmetics, createCosmeticLayers, EMPTY_MANIFEST } from './cosmetics.js';
+import { FAN_BAND_AVATAR } from '../../shared/fanBands.js';
 
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const str = (v) => (typeof v === 'string' && v ? v : null);
@@ -109,7 +110,16 @@ export function tokenAvatarUrl(m, tokenId) {
 }
 
 export const bondIconUrl = (m, bondId) => str(get(get(m, 'bonds'), str(bondId) || ''));
-export const bandIconUrl = (m, bandId) => str(get(get(m, 'bands'), str(bandId) || ''));
+/** Strategy icon; fan remake bands fall back to the operator avatar (same rule as ui/assetUrls.js). */
+export function bandIconUrl(m, bandId) {
+  const direct = str(get(get(m, 'bands'), str(bandId) || ''));
+  if (direct) return direct;
+  let id = str(bandId);
+  if (!id) return null;
+  if (id.startsWith('icon_')) id = `band_${id.slice(5)}`;
+  const charId = FAN_BAND_AVATAR[id];
+  return charId ? avatarUrl(m, charId) : null;
+}
 
 /** Item icon by trapId (`trap_1041_acarm041`) or item record (`{ trapId | iconId }`). */
 export function itemIconUrl(m, item) {

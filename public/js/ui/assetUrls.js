@@ -2,6 +2,10 @@
 // manifest object (or null) and returns a URL string or null — callers draw their own fallback
 // (glyph, CSS shape) when null. Only URLs present in the manifest are ever returned, so the client
 // never requests files the asset pipeline did not produce (no 404 noise in the console).
+// Fan remake strategy icons may resolve through an operator avatar already in the manifest
+// (`shared/fanBands.js` / bands.json `avatarCharId`).
+
+import { FAN_BAND_AVATAR } from '../../../shared/fanBands.js';
 
 const str = (v) => (typeof v === 'string' && v ? v : null);
 const obj = (v) => (v && typeof v === 'object' ? v : null);
@@ -101,9 +105,15 @@ export function bondIconUrl(m, bondId) {
   return bondId ? str(obj(obj(m)?.bonds)?.[bondId]) : null;
 }
 
-/** Band (strategy) icon. */
-export function bandIconUrl(m, bandId) {
-  return bandId ? str(obj(obj(m)?.bands)?.[bandId]) : null;
+/** Band (strategy) icon. Fan remake bands fall back to the operator avatar (`shared/fanBands.js`). */
+export function bandIconUrl(m, bandId, band) {
+  if (!bandId) return null;
+  const direct = str(obj(obj(m)?.bands)?.[bandId]);
+  if (direct) return direct;
+  let id = bandId;
+  if (id.startsWith('icon_')) id = `band_${id.slice(5)}`;
+  const charId = str(band?.avatarCharId) || str(FAN_BAND_AVATAR[id]);
+  return charId ? chessAvatarUrl(m, { charId, assets: { avatar: charId } }) : null;
 }
 
 /** Item icon for an items.json record (by trapId / iconId) or a raw trap id. */

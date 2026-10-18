@@ -39,6 +39,7 @@ import { DEPLOY_REFUSED_TILES } from '../server/sim/grid.js';
 import { validateReferences } from '../shared/plugins/validate.js';
 import { computeGroundPaths } from '../server/sim/groundPaths.js';
 import { bandBondIds } from '../shared/bandBonds.js';
+import { FAN_BANDS, OFFICIAL_BAND_COUNT, TOTAL_BAND_COUNT } from '../shared/fanBands.js';
 import { statusKey, composeUnitRecord } from '../shared/standIn.js';
 import { extendedGrid } from '../shared/loadoutRecord.js';
 import { FULL_RANK, atRank, stripPotential } from '../shared/potential.js';
@@ -1838,6 +1839,18 @@ function buildEffects(ctx) {
   for (const id of Object.keys(ctx.act.effectBuffInfoDataDict)) {
     if (!out[id]) warn(`effectBuffInfoDataDict has ${id} without effectInfoDataDict entry`);
   }
+  // Fan remake strategies: their effect records live only here (shared/fanBands.js). [ASSUMED]
+  for (const fan of FAN_BANDS) {
+    if (out[fan.effectId]) { warn(`fan effect ${fan.effectId} collides with an official id — skipped`); continue; }
+    const buffs = fan.buffs.map((x) => ({ key: x.key, countType: 'NONE', bb: { ...x.bb }, bbStr: { ...x.bbStr } }));
+    out[fan.effectId] = {
+      effectId: fan.effectId, effectType: 'BAND_INITIAL', name: fan.effectName,
+      desc: fan.desc, descRaw: fan.descRaw,
+      counterType: 'NONE', continuedRound: -1,
+      decoIconId: null, enemyPrice: 0,
+      buffs, params: { ...fan.params }, fan: true,
+    };
+  }
   return out;
 }
 
@@ -2071,8 +2084,8 @@ function buildItems(ctx, effects) {
 // ===== bands (策略) ===============================================================================
 
 /**
- * Build data/bands.json: the 40 season strategies. `bondIds` (the bonds a strategy is built around: shared/bandBonds.js
- * over its text and blackboards, needing bonds.json and choices.json pools) is added in main() once those are built.
+ * Build data/bands.json: the 40 season strategies, then the fan remake strategies (`shared/fanBands.js`).
+ * `bondIds` (shared/bandBonds.js) is added in main() once bonds.json and choices.json pools are built.
  */
 function buildBands(ctx, effects) {
   const { act, ac } = ctx;
@@ -2093,6 +2106,20 @@ function buildBands(ctx, effects) {
       params: eff?.params || {},
       victorCount: b.victorCount, rewardModulus: b.bandRewardModulus ?? 1,
       unlockDesc: meta.unlockDesc || null,
+    };
+  }
+  // Fan remake strategies: operator-avatar icons, existing buff keys only (shared/fanBands.js). [ASSUMED]
+  for (const fan of FAN_BANDS) {
+    if (out[fan.bandId]) { warn(`fan band ${fan.bandId} collides with an official id — skipped`); continue; }
+    out[fan.bandId] = {
+      bandId: fan.bandId, sortId: fan.sortId, name: fan.name, iconId: fan.iconId,
+      avatarCharId: fan.avatarCharId,
+      modeTypeList: [...fan.modeTypeList], totalHp: fan.totalHp,
+      effectId: fan.effectId, effectName: fan.effectName, desc: fan.desc, descRaw: fan.descRaw,
+      buffs: fan.buffs.map((x) => ({ key: x.key, bb: { ...x.bb }, bbStr: { ...x.bbStr } })),
+      params: { ...fan.params },
+      victorCount: fan.victorCount, rewardModulus: fan.rewardModulus,
+      unlockDesc: fan.unlockDesc, fan: true,
     };
   }
   return out;
@@ -3843,7 +3870,13 @@ function validateAll(f) {
   const { chess, bonds, bands, items, tokens, backups, stages } = f;
   const visible = Object.values(chess).filter((c) => !c.isGolden && c.visible);
   if (Object.keys(bonds).length !== 23) err(`expected 23 bonds, got ${Object.keys(bonds).length}`);
-  if (Object.keys(bands).length !== 40) err(`expected 40 bands, got ${Object.keys(bands).length}`);
+  if (Object.keys(bands).length !== TOTAL_BAND_COUNT) {
+    err(`expected ${TOTAL_BAND_COUNT} bands (${OFFICIAL_BAND_COUNT} official + ${FAN_BANDS.length} fan), got ${Object.keys(bands).length}`);
+  }
+  for (const fan of FAN_BANDS) {
+    if (!bands[fan.bandId]?.fan) err(`fan band ${fan.bandId} missing from bands.json`);
+    if (bands[fan.bandId]?.avatarCharId !== fan.avatarCharId) err(`fan band ${fan.bandId}: avatarCharId mismatch`);
+  }
   if (visible.length !== 112) err(`expected 112 visible non-DIY chess, got ${visible.length}`);
   // the deliberate trigger deviations (DESIGN §21.29, §22.10) still override an official TAKE_DAMAGE row, on the normal
   // chess and its elite alike (a DEFAULT one may resolve to the owner's ACTIVE_RANGE on top: 深巡 S2)

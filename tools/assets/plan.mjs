@@ -17,7 +17,7 @@
 // (`moduleTypes`), the 20 pool tokens, every enemy that can appear in an
 // act2autochess match (07 enemy list ∪ act1autochess wave/boss levels used by
 // act2 modes ∪ bosses ∪ their summons ∪ enemy units spawned by operator kits),
-// the 23 bonds, 59 shop items, 40 bands,
+// the 23 bonds, 59 shop items, 40 official bands (+ fan remake bands → operator avatars),
 // default-skill icons, profession icons, autochess UI sprites (the 36 battle
 // emotes and the 19 玩法说明 pages included: UI_EXTRAS), BGM and SFX.
 
@@ -26,6 +26,7 @@ import { kindOf } from './formats.mjs';
 import { pickUnitSfx, pickModeAttacks, pickModeHits, skillModeLetter, SLOT_MODE_LETTER, UI_SFX, BATTLE_SFX, resolveSpec, indexVoice, nativeVoiceDirs, VOICE_DIRS, VOICE_CUSTOM_DIR, VOICE_BATTLE_SLOTS } from './audio.mjs';
 import { literal } from './manifest.mjs';
 import { EMOTE_CATALOG } from '../../shared/constants.js';
+import { FAN_BANDS } from '../../shared/fanBands.js';
 
 /**
  * The voice slots are read from the zh_CN charword table, whose voiceIds are always `CN_*`: the other dubs
@@ -574,6 +575,12 @@ export function buildPlan({ assets07, ops03, enemies05, maps05, audio, modelsDat
   for (const [trapId, it] of Object.entries(assets07?.items || {})) items[trapId] = leaf(alt(`item/${trapId}.png`, it.icon?.url, it.icon?.bytes));
   const bands = {};
   for (const [bandId, b] of Object.entries(assets07?.bands || {})) bands[bandId] = leaf(alt(`band/${bandId}.png`, b.icon?.url, b.icon?.bytes));
+  // Fan remake strategies: reuse the operator avatar already planned under chars[avatarCharId].
+  for (const fan of FAN_BANDS) {
+    if (bands[fan.bandId]) continue;
+    const avatar = chars[fan.avatarCharId]?.avatar;
+    if (avatar) bands[fan.bandId] = avatar;
+  }
 
   // --- professions ----------------------------------------------------------
   const prof = { icon: {}, large: {}, battlecard: {}, sub: {} };
