@@ -106,7 +106,9 @@ K.prep_finish_char_bond_add_layer = (ps) => ({
 K.band_first_self_refresh_present_char = (ps) => ({
   onRefresh(ctx) {
     const p = ps[0];
-    if ((ctx.roundStats().refreshes || 0) > 2) return;
+    // Official 杜遥夜: the first 2 manual refreshes. Fan remakes may raise `max_refresh` (still a small number).
+    const maxRefresh = Math.max(1, int(p.max_refresh, 2));
+    if ((ctx.roundStats().refreshes || 0) > maxRefresh) return;
     const need = timesOf(p.count, 1);
     const idx = chessSlots(ctx);
     const slots = ctx.shopSlots();

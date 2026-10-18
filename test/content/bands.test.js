@@ -1019,6 +1019,82 @@ test('fan batch-3 smoke: the ten new strategies hit their blackboards', () => {
   }
 });
 
+test('fan faction-deep smoke: large-bond strategies need their nation', () => {
+  assert.deepEqual(DATA.bands.band_qiubai.bondIds, ['yanShip']);
+  assert.deepEqual(DATA.bands.band_siege2.bondIds, ['victoriaShip']);
+  assert.deepEqual(DATA.bands.band_gnosis.bondIds, ['kjeragShip']);
+  assert.deepEqual(DATA.bands.band_glady.bondIds, ['egirShip']);
+  assert.deepEqual(DATA.bands.band_whitw2.bondIds, ['siracusaShip']);
+  assert.deepEqual(DATA.bands.band_flamtl.bondIds, ['kazimierzShip']);
+
+  // 仇白: first 3 refreshes try for 2 <炎>
+  {
+    const seed = seedWithBond('yanShip', 3, 3);
+    const { m, ps } = setup({ band: 'band_qiubai', seed });
+    ps.shop.level = 3; ps.funds = 50;
+    for (let i = 0; i < 3; i++) assert.deepEqual(m.handle('p_0', { t: 'g.refresh' }), OK);
+    const chess = ps.shop.slots.filter((sl) => sl && sl.kind === 'chess');
+    assert.ok(chess.filter((sl) => DATA.chess[sl.id].bonds.includes('yanShip')).length >= 2);
+    cover('band_qiubai');
+  }
+  // 维娜: every round from R3 a victoria
+  {
+    const { ps, roundStart } = setup({ band: 'band_siege2', seed: 18 });
+    const grants = spyGrants(ps);
+    roundStart(2); assert.equal(grants.length, 0);
+    roundStart(3); assert.equal(grants.length, 1);
+    roundStart(4); assert.equal(grants.length, 2);
+    for (const id of grants) assert.ok(DATA.chess[id].bonds.includes('victoriaShip'));
+    cover('band_siege2');
+  }
+  // 灵知: R3+ every round kjerag + first buy costs 1
+  {
+    const { m, ps, roundStart } = setup({ band: 'band_gnosis', seed: 3 });
+    const grants = spyGrants(ps);
+    roundStart(3);
+    assert.ok(grants.length >= 1 && DATA.chess[grants[0]].bonds.includes('kjeragShip'));
+    ps.shop.slots = [slotOf('chess_char_2_05_a'), slotOf('chess_char_2_06_a')];
+    assert.equal(ps.priceOf(ps.shop.slots[0]), 1);
+    cover('band_gnosis');
+  }
+  // 歌蕾蒂娅: egir grant every 2 rounds from R3 + death layers (same buff as 克莱门莎)
+  {
+    const { ps, roundStart } = setup({ band: 'band_glady', seed: 11 });
+    const grants = spyGrants(ps);
+    roundStart(3); assert.equal(grants.length, 1);
+    roundStart(4); assert.equal(grants.length, 1);
+    roundStart(5); assert.equal(grants.length, 2);
+    for (const id of grants) assert.ok(DATA.chess[id].bonds.includes('egirShip'));
+    const ops = { t_eg: op('t_eg', { bonds: ['egirShip'], tier: 3 }) };
+    const h = fight({ band: 'band_glady', bonds: active('egirShip'), ops, units: [{ chessId: 't_eg', row: 10, col: 4 }], foes: [[10, 9]] });
+    h.step(1);
+    h.b.dealDamage(foe(h), h.unit('t_eg'), { amount: 1e6, type: 'true' });
+    assert.deepEqual(h.b.result().perPlayer.p1.layerGains, { egirShip: 3 });
+    cover('band_glady');
+  }
+  // 荒芜拉普兰德: every 4 refreshes → siracusa
+  {
+    const seed = seedWithBond('siracusaShip', 3, 2);
+    const { m, ps } = setup({ band: 'band_whitw2', seed });
+    ps.shop.level = 3; ps.funds = 80;
+    const grants = spyGrants(ps);
+    for (let i = 0; i < 4; i++) assert.deepEqual(m.handle('p_0', { t: 'g.refresh' }), OK);
+    assert.equal(grants.length, 1);
+    assert.ok(DATA.chess[grants[0]].bonds.includes('siracusaShip'));
+    cover('band_whitw2');
+  }
+  // 焰尾: kazimierz buys → pending funds (max 4)
+  {
+    const { m, ps } = setup({ band: 'band_flamtl', seed: 5 });
+    const kaz = Object.values(DATA.chess).find((c) => c.visible && !c.isGolden && c.bonds.includes('kazimierzShip') && c.tier <= 3);
+    ps.shop.slots = [slotOf(kaz.chessId), slotOf(kaz.chessId), slotOf(kaz.chessId), slotOf(kaz.chessId), slotOf('chess_char_1_04_a')];
+    ps.funds = 40;
+    for (let i = 0; i < 4; i++) assert.deepEqual(m.handle('p_0', { t: 'g.buy', slot: i }), OK);
+    assert.equal(ps.pendingFunds, 4);
+    cover('band_flamtl');
+  }
+});
+
 test('coverage: every band is exercised by a test above', () => {
   cover('band_dusk'); // 夕: 画卷 grant (fixed-round test) + 墨色真颜 (battle test)
   const missing = Object.keys(DATA.bands).filter((id) => !COVER.has(id)).sort();
