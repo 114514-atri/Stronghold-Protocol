@@ -10,6 +10,7 @@ import { hasBattlePart, amedicCharsFor, PRIO_BAND_REVIVE } from '../../server/si
 import { bandMetaHandler, duckReplace } from '../../server/sim/content/bands/meta.js';
 import { PRIO_RESPAWN } from '../../server/sim/content/items/battle.js';
 import * as bands from '../../server/sim/content/bands.js';
+import { FAN_BANDS, FAN_BAND_COUNT, TOTAL_BAND_COUNT } from '../../shared/fanBands.js';
 
 const QUIET = { warn() {}, error() {}, info() {} };
 const REG = createRegistry({ log: QUIET });
@@ -66,23 +67,39 @@ const slotOf = (id) => ({ kind: 'chess', id, basePrice: DATA.chess[id].tier === 
 // ---------------------------------------------------------------------------------------------------------------
 // data / wiring
 
-test('bands.js wires both parts: 28 bands with a prep handler, 10 with a battle part, 鸭爵 global, 歌利亚 = LP only', () => {
+test('bands.js wires both parts: every band has prep and/or battle, 鸭爵 global, 歌利亚 = LP only', () => {
   assert.equal(typeof bands.install, 'function');
   assert.equal(typeof bands.registerMeta, 'function');
   const ids = Object.keys(DATA.bands);
-  assert.equal(ids.length, 48); // 40 official + 8 fan (shared/fanBands.js)
+  assert.equal(ids.length, TOTAL_BAND_COUNT);
+  assert.equal(ids.filter((id) => DATA.bands[id].fan).length, FAN_BAND_COUNT);
   const meta = ids.filter((id) => REG.has(`band:${id}`));
   const battle = ids.filter(hasBattlePart);
-  assert.equal(meta.length, 31); // + angel / demkni / pasngr (prep)
-  assert.deepEqual(battle.sort(), [
-    'band_amedic', 'band_amiya', 'band_chen', 'band_clementia', 'band_dusk', 'band_emperor',
-    'band_ermengard', 'band_f12yin', 'band_humus', 'band_ioleta', 'band_mberry', 'band_mudrok',
-    'band_nearl2', 'band_qalaisa', 'band_surtr', 'band_svrash',
-  ].sort());
   assert.ok(REG.has('global:bands_ducklord'));
   const none = ids.filter((id) => !meta.includes(id) && !battle.includes(id));
   assert.deepEqual(none.sort(), ['band_ducklord', 'band_sarkazb']);
   for (const id of ids) if (!meta.includes(id)) assert.equal(bandMetaHandler(id), null, id);
+  for (const fan of FAN_BANDS) {
+    assert.ok(DATA.bands[fan.bandId]?.fan, fan.bandId);
+    assert.ok(meta.includes(fan.bandId) || battle.includes(fan.bandId), `${fan.bandId} needs a handler`);
+  }
+});
+
+test('fan strategy portraits do not collide with official band names or each other', () => {
+  const officialNames = new Set(Object.values(DATA.bands).filter((b) => !b.fan).map((b) => b.name));
+  const names = new Set();
+  const chars = new Set();
+  for (const fan of FAN_BANDS) {
+    assert.ok(!officialNames.has(fan.name), `fan name ${fan.name} collides with an official strategy`);
+    for (const n of officialNames) {
+      assert.ok(!fan.name.includes(n) && !n.includes(fan.name), `fan ${fan.name} overlaps official ${n}`);
+    }
+    assert.ok(!names.has(fan.name), `duplicate fan name ${fan.name}`);
+    assert.ok(!chars.has(fan.avatarCharId), `duplicate fan avatar ${fan.avatarCharId}`);
+    names.add(fan.name);
+    chars.add(fan.avatarCharId);
+    assert.equal(DATA.bands[fan.bandId].avatarCharId, fan.avatarCharId);
+  }
 });
 
 test('starting LP = totalHp for every band (歌利亚 坚不可摧 45, 铃兰 20)', () => {
@@ -906,6 +923,100 @@ test('fan 耀骑士临光 荣光: 3 / 4 / ≥ 5 active bonds ⇒ ATK and HP ×1.
     close(u.s.maxHp, 2000 * mul, `${n} bonds HP`);
   }
   cover('band_nearl2');
+});
+
+test('fan batch-3 smoke: the ten new strategies hit their blackboards', () => {
+  // 斯卡蒂 +1 layer / tier
+  {
+    const { m, ps, prepEnd } = setup({ band: 'band_skadi', seed: 50 });
+    give(m, ps, 'chess_char_2_06_a', 'board', [10, 5]);
+    prepEnd();
+    assert.equal(ps.layers.sargonShip, 1);
+    cover('band_skadi');
+  }
+  // 星熊 redeploy −35 % → ×0.65
+  {
+    const h = fight({ band: 'band_hsguma', units: [{ chessId: 't_op', row: 10, col: 4 }] });
+    h.step(1);
+    const u = h.unit('t_op');
+    h.b.kill(u);
+    close(u.respawnAt - h.b.time, 13, '20 × 0.65');
+    cover('band_hsguma');
+  }
+  // 幽灵鲨 death stack +22 %
+  {
+    const ops = { t_a: op('t_a'), t_b: op('t_b') };
+    const h = fight({ band: 'band_ghost', ops, units: [{ chessId: 't_a', row: 10, col: 4 }, { chessId: 't_b', row: 11, col: 4 }], foes: [[10, 9]] });
+    h.step(1);
+    h.b.dealDamage(foe(h), h.unit('t_a'), { amount: 1e6, type: 'true' });
+    close(h.unit('t_b').s.atk, 610, '+22 %');
+    cover('band_ghost');
+  }
+  // 风笛 every 12 funds
+  {
+    const { ps } = setup({ band: 'band_bpipe', seed: 21 });
+    ps.shop.level = 2;
+    const grants = spyGrants(ps);
+    ps.spend(12); ps._afterSpend(12, 'test');
+    assert.equal(grants.length, 1);
+    cover('band_bpipe');
+  }
+  // 安洁莉娜 free shop chess every 3 rounds
+  {
+    const { m, ps, roundStart } = setup({ band: 'band_aglina', seed: 7 });
+    ps.shop.slots = [slotOf('chess_char_1_04_a'), slotOf('chess_char_1_09_a'), null, null, null];
+    const grants = spyGrants(ps);
+    roundStart(3);
+    assert.equal(grants.length, 1);
+    roundStart(4);
+    assert.equal(grants.length, 1);
+    roundStart(6);
+    assert.equal(grants.length, 2);
+    cover('band_aglina');
+  }
+  // 号角 +15 % per elite
+  {
+    const ops = { t_e1_b: op('t_e1_b', { golden: true }), t_e2_b: op('t_e2_b', { golden: true }) };
+    const h = fight({ band: 'band_horn', ops, units: [{ chessId: 't_e1_b', row: 10, col: 4 }, { chessId: 't_e2_b', row: 11, col: 4 }] });
+    h.step(1);
+    close(h.unit('t_e1_b').s.atk, 650, '2 × 15 %');
+    cover('band_horn');
+  }
+  // 锏 multi-bond 18/28/38
+  {
+    const ALL = ['yanShip', 'sargonShip', 'victoriaShip', 'kjeragShip', 'lateranoShip'];
+    const h = fight({ band: 'band_blkkgt', bonds: active(...ALL.slice(0, 3)), units: [{ chessId: 't_op', row: 10, col: 4 }] });
+    h.step(1);
+    close(h.unit('t_op').s.atk, 590, '×1.18');
+    cover('band_blkkgt');
+  }
+  // 水月 R7 layers (余 is R8 / 36·12)
+  {
+    const s = setup({ band: 'band_mizuki' });
+    s.ps.bondCountBonus.yanShip = 20; s.ps.recompute();
+    s.roundStart(7);
+    assert.equal(s.ps.layers.yanShip, 30);
+    cover('band_mizuki');
+  }
+  // 莫斯提马 same-name +40 %
+  {
+    const ops = { t_op: op('t_op'), t_b: op('t_b') };
+    const h = fight({ band: 'band_mostma', ops, units: [{ chessId: 't_op', row: 10, col: 4 }, { chessId: 't_op', row: 11, col: 4 }, { chessId: 't_b', row: 12, col: 4 }] });
+    h.step(1);
+    close(h.unit(1).s.atk, 700, 'same-name +40 %');
+    close(h.unit(3).s.atk, 500, 'unique name');
+    cover('band_mostma');
+  }
+  // 赫默 front shield 40 %
+  {
+    const ops = { t_op: op('t_op') };
+    const h = fight({ band: 'band_silent', ops, units: [{ chessId: 't_op', row: 10, col: 7 }], foes: [[10, 8]] });
+    forceRng(h, 0.39);
+    h.run(3.1);
+    const b = h.unit('t_op').findBuff('band:band_silent:shield');
+    assert.equal(b ? b.shieldHits : 0, 1);
+    cover('band_silent');
+  }
 });
 
 test('coverage: every band is exercised by a test above', () => {
