@@ -639,6 +639,24 @@ test('a Worker host never attaches the combat meter, even when the setting is on
   r.runner.dispose();
 });
 
+test('m.public.speed retargets a running battle without jumping its game time', async () => {
+  const start = realStart(7311);
+  const r = rig();
+  r.net.emit('b.start', start);
+  await r.settle();
+  const e = r.runner._entries.get(start.battleId);
+  r.advance(1000);
+  const at2 = e.battle.time;
+  assert.ok(Math.abs(at2 - 2) < 0.2, `1s at 2× is about 2 game seconds (${at2})`);
+  r.store.patch('match', { public: { phase: PHASE.COMBAT, round: 2, speed: 4, speedMul: 2, paused: false } });
+  assert.equal(e.speed, 4);
+  const jumped = e.battle.time;
+  assert.ok(Math.abs(jumped - at2) < 0.05, `game time stays (${jumped} vs ${at2})`);
+  r.advance(1000);
+  assert.ok(Math.abs(e.battle.time - at2 - 4) < 0.35, `the next second runs at 4× (${e.battle.time})`);
+  r.runner.dispose();
+});
+
 test('settings expose 作战统计 off by default and the match hides the button unless it is on', () => {
   const settings = readFileSync(new URL('../../public/js/ui/settings.js', import.meta.url), 'utf8');
   const game = readFileSync(new URL('../../public/js/screens/game.js', import.meta.url), 'utf8');

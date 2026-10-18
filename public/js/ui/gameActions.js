@@ -97,6 +97,8 @@ export const actions = {
   autoplay: (on) => act('g.autoplay', { on }),
   // solo battles only (ui/matchStatus.js pauseAvailable): m.public.paused follows
   pause: (on) => act('g.pause', { on: !!on }, { sfx: on ? 'click' : 'confirm' }),
+  // 1 = the match's base combat speed, 2 = twice that (co-op 1→2 waits for every human)
+  speed: (mul) => act('g.speed', { mul: mul === 2 ? 2 : 1 }, { sfx: 'click' }),
   // solo practice modifier only (ui/cheatPanel.js; server refuses co-op). fields: { op, n?, bondId?, chessId? }
   debug: (fields) => {
     const f = fields && typeof fields === 'object' ? fields : { op: fields };

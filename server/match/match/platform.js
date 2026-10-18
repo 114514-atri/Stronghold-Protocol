@@ -141,6 +141,7 @@ export class MatchPlatform {
       this.watchers.delete(playerId);
       if (this.ended) return;
       this._resume();
+      this._refreshSpeedVote();
       if (this.clientCombat) this._authorityLost(ps, 'left');
       // a rehearsal the departed seat was running falls back to the server (DESIGN §14; a no-op without tasks)
       this._rehearsalHostChanged();

@@ -92,6 +92,13 @@ export class MatchViews {
       combatMode: this.clientCombat ? 'client' : 'server',
       // solo pause (g.pause, DESIGN §14): the battle, its field clock and every deadline are frozen while true
       paused: !!this.paused,
+      // combat playback relative to the match's base speed (g.speed): 1 = current, 2 = twice that.
+      // speed is game seconds per real second. speedVote is the open 1→2 request (agreed human ids).
+      speedMul: this.speedMul === 2 ? 2 : 1,
+      speed: this.gameSpeed,
+      speedVote: this.speedMul === 1 && this.speedAgreed && this.speedAgreed.size
+        ? { agreed: [...this.speedAgreed] }
+        : null,
       players: this.order.map((ps) => ({
         playerId: ps.playerId,
         seat: ps.seat,

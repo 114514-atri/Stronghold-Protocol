@@ -499,6 +499,9 @@ export const C2S = {
   // solo pause (official PauseUp / ResumeUp, DESIGN §14): freezes the running battle (field clock, deadlines, the
   // browser's local runner) — solo matches only (co-op ⇒ WRONG_PHASE), only while a battle runs; m.public.paused
   'g.pause': { on: isBool },
+  // combat playback: 1 = the match's current base speed, 2 = twice that. Co-op 1→2 needs every human still in;
+  // 2→1 applies at once. m.public.speedMul / speed / speedVote.
+  'g.speed': { mul: (v) => v === 1 || v === 2 },
   // solo debug modifier (local practice aid): solo matches only (co-op ⇒ WRONG_PHASE). Closed set of ops; `n` is the
   // amount for addFunds / setFunds / setLp / freeRefresh / addDeployCap / addLayers / setLayers (clamps on the server);
   // `bondId` is for addLayers / setLayers (absent addLayers = every bond the seat currently owns members of);

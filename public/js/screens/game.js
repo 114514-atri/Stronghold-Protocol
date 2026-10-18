@@ -240,6 +240,7 @@ function MatchScreen() {
   const [camKind, setCamKind] = useState('prep');        // kind of the last camera request (data-camera)
   const [replace, setReplace] = useState(null);          // equip-replace dialog: { request, resolve }
   const [pauseBusy, setPauseBusy] = useState(false);
+  const [speedBusy, setSpeedBusy] = useState(false);
   const [armedCard, setArmedCard] = useState(null);     // the shop bar's armed card { kind, id } (merge tile cue)
   const cc = isClientCombat(pub);
   const battleState = useStore((s) => s.match.battle, shallowEqual); // local battle runner (client-side combat)
@@ -1158,6 +1159,11 @@ function MatchScreen() {
     await actions.pause(on);
     setPauseBusy(false);
   }, []);
+  const pickSpeed = useCallback(async (mul) => {
+    setSpeedBusy(true);
+    await actions.speed(mul);
+    setSpeedBusy(false);
+  }, []);
   const togglePauseRef = useRef(togglePause);
   togglePauseRef.current = togglePause;
 
@@ -1573,6 +1579,15 @@ function MatchScreen() {
         readyBusy=${readyBusy} readyCount=${readyCount} playerCount=${solo ? 1 : aliveCount}
         pen=${pen} penAvail=${penAvail} onPen=${togglePen} config=${gd.config} frozenAt=${frozenAt}
         pause=${canPause || paused ? { show: canPause, paused, busy: pauseBusy, onToggle: () => togglePause(!paused) } : null}
+        speed=${pub ? {
+          mul: pub.speedMul === 2 ? 2 : 1,
+          agreed: pub.speedVote?.agreed || [],
+          voters: (pub.players || []).filter((p) => p && !p.isBot && p.status !== 'left').length || 1,
+          mine: !!(pub.speedVote?.agreed || []).includes(myId),
+          busy: speedBusy,
+          disabled: spectator,
+          onPick: pickSpeed,
+        } : null}
         live=${liveLpNow} spectator=${spectator}
         spectators=${specFacts.list} myId=${myId} isHost=${specFacts.isHost} onRemoveSpectator=${removeSpectator} room=${modRoom} />
 

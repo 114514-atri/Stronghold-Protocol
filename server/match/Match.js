@@ -183,6 +183,7 @@
 //   watch.js         spectator seats, g.watch, who is shown which field, resend on reconnect, prep-scout pushes
 //   intents.js       the g.* / b.* router, emotes, AI 托管, g.unitStats
 //   pause.js         the solo pause
+//   speed.js         1× / 2× combat speed (g.speed)
 //   phases.js        INFO_CHECK, BAND_DRAFT (the strategy draft), BATTLE_CHECK, ROUND_START
 //   spDraft.js       SP_DRAFT (机变) and the rolls the meta effects ask for (bounties, item ids, pools)
 //   prep.js          PREP: its start, the AI seats' sliced preps, Ready, the deadline, its end
@@ -218,6 +219,7 @@ import { MatchViews } from './match/views.js';
 import { MatchWatch } from './match/watch.js';
 import { MatchIntents } from './match/intents.js';
 import { MatchPause } from './match/pause.js';
+import { MatchSpeed } from './match/speed.js';
 import { MatchDebug } from './match/debug.js';
 import { MatchPhases } from './match/phases.js';
 import { MatchSetupVote } from './match/setupVote.js';
@@ -292,7 +294,12 @@ export class Match {
     this.BattleClass = typeof opts.BattleClass === 'function' ? opts.BattleClass : Battle;
     this.battleContent = opts.battleContent || 'full';
     this.timerScale = Number.isFinite(opts.timerScale) && opts.timerScale >= 0 ? opts.timerScale : 1;
-    this.gameSpeed = Number.isFinite(opts.combatSpeed) && opts.combatSpeed > 0 ? Math.min(opts.combatSpeed, 200) : GAME_SPEED;
+    this.baseGameSpeed = Number.isFinite(opts.combatSpeed) && opts.combatSpeed > 0 ? Math.min(opts.combatSpeed, 200) : GAME_SPEED;
+    /** 1 = the match's base combat speed (the forced 2×, or opts.combatSpeed); 2 = twice that. g.speed. */
+    this.speedMul = 1;
+    this.gameSpeed = this.baseGameSpeed;
+    /** human seats who agreed to leave 1× for 2× (cleared once applied or when anyone returns to 1×) */
+    this.speedAgreed = new Set();
     /** layouts a bot rehearses per prep with the real simulation (bot.js; 0 = heuristic placement only) */
     this.botRehearsal = Number.isInteger(opts.botRehearsal) && opts.botRehearsal >= 0 ? Math.min(opts.botRehearsal, 8) : BOT_REHEARSAL_DEFAULT;
     /** wall-clock budget of one rehearsal slice (scheduleBotPrep) */
@@ -454,7 +461,7 @@ export class Match {
 }
 
 // the method modules, in this order (a name defined twice is an error, never a silent override)
-for (const part of [MatchPlatform, MatchInfra, MatchMessaging, MatchViews, MatchWatch, MatchIntents, MatchPause, MatchDebug, MatchPhases, MatchSetupVote, MatchSpDraft, MatchPrep, MatchCombat, MatchClientCombat, MatchRehearsal, MatchReports, MatchUnite, MatchBoss, MatchSettle]) {
+for (const part of [MatchPlatform, MatchInfra, MatchMessaging, MatchViews, MatchWatch, MatchIntents, MatchPause, MatchSpeed, MatchDebug, MatchPhases, MatchSetupVote, MatchSpDraft, MatchPrep, MatchCombat, MatchClientCombat, MatchRehearsal, MatchReports, MatchUnite, MatchBoss, MatchSettle]) {
   for (const key of Reflect.ownKeys(part.prototype)) {
     if (key === 'constructor') continue;
     if (Object.prototype.hasOwnProperty.call(Match.prototype, key)) throw new Error(`Match.${String(key)} is defined twice`);

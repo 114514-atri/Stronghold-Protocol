@@ -575,6 +575,26 @@ export function createBattleRunner(deps) {
     for (const e of entries.values()) if (e.delivery === 'undelivered') deliver(e);
   }
 
+  /**
+   * m.public.speed changed (g.speed): keep the game time already played and run the rest at the new rate.
+   * @param {number} speed game seconds per real second
+   */
+  function setBattleSpeed(speed) {
+    const s = Number(speed);
+    if (!(s > 0)) return;
+    let changed = false;
+    for (const e of [...entries.values(), ...pending.values()]) {
+      if (e.speed === s) continue;
+      if (e.t0 != null) {
+        const elapsed = Math.max(0, ((clock() - e.t0) / 1000) * e.speed);
+        e.t0 = clock() - (elapsed / s) * 1000;
+      }
+      e.speed = s;
+      changed = true;
+    }
+    if (changed) { publishState(); schedule(); }
+  }
+
   /** Solo pause (m.public.paused): freeze / resume every local battle clock. */
   function setPaused(on) {
     if (on === (pausedAt != null)) return;
@@ -933,6 +953,8 @@ export function createBattleRunner(deps) {
       lastRound = round;
       // solo pause (DESIGN §14): the local battle clocks follow m.public.paused
       setPaused(!!(pub && pub.paused));
+      // 1× / 2× (g.speed): m.public.speed is game seconds per real second
+      if (pub && Number(pub.speed) > 0) setBattleSpeed(Number(pub.speed));
       const phase = pub ? pub.phase : null;
       if (phase === lastPhase && !resetMetrics) return;
       lastPhase = phase;

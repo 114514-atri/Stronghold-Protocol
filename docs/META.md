@@ -204,6 +204,15 @@ always. While paused (`m.public.paused`) the field clocks, the authority deadlin
 fields' `startAt` / `lastProgressAt` and the boss start by the paused time and re-arms the timers. A disconnect or
 `onLeave` resumes; the battle phase ending clears it (`pausedMs` totals the paused time).
 
+### 1.3c Combat speed
+`g.speed { mul }` (`Match.setSpeed`): `mul` is 1 or 2. 1× is the match's base combat speed (forced 2 game-seconds per
+real second, or `opts.combatSpeed`); 2× is twice that. Default 1. The top-right button sends it in every match.
+Solo applies at once. Co-op 1→2 records the human on `m.public.speedVote.agreed` and applies only when every human
+still seated has agreed (bots do not vote; a seat that left drops out). 2→1 clears the request and returns to the
+base speed on any one human's click. A change during COMBAT / 联防 / 最终攻势 / 隐秘核心 keeps game time already played
+and game time still left on the HUD, the field clock and overtime (`_shiftBattleClocks`). `m.public.speed` is the
+absolute rate; the browser runner follows it. Spectators get `SPECTATOR`.
+
 ### 1.3b Solo practice modifier
 `g.debug { op, n?, bondId?, chessId? }` (`Match.applyDebug`): a local practice aid for **独立模拟 only** (co-op → `WRONG_PHASE 'solo only'`).
 Closed ops: `addFunds` / `setFunds` / `setLp` / `freeRefresh` / `maxShop` / `addDeployCap` / `rerollShop` /

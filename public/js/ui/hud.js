@@ -331,6 +331,32 @@ function PauseGlyph() {
 }
 
 /**
+ * Combat playback (g.speed). 1× is the match's current speed; 2× is twice that.
+ * Co-op 1→2 stays on 1× until every human still in has clicked; 2→1 applies on any click.
+ * @param {{ mul: 1|2, agreed?: string[], voters?: number, mine?: boolean, busy?: boolean, disabled?: boolean, onPick: (mul: 1|2) => void }} props
+ */
+export function SpeedButton({ mul = 1, agreed = [], voters = 1, mine = false, busy = false, disabled = false, onPick }) {
+  const fast = mul === 2;
+  const pending = !fast && agreed.length > 0;
+  const tip = disabled
+    ? t('观战不能切换倍速')
+    : fast
+      ? t('当前 2 倍速，点击恢复 1 倍')
+      : pending
+        ? t('请求开启 2 倍速（{agreed}/{total}，需全员同意）', { agreed: agreed.length, total: voters })
+        : t('当前 1 倍速，点击切换为 2 倍');
+  const label = fast ? '2x' : '1x';
+  return html`<${Tooltip} text=${tip} placement="bottom">
+    <button type="button" class=${cx('speedbtn', 'tapx', fast && 'is-on', pending && 'is-pending', mine && pending && 'is-mine', busy && 'is-busy')}
+        aria-pressed=${fast ? 'true' : 'false'} aria-label=${label} disabled=${disabled || busy}
+        data-testid="speed" onClick=${() => { if (!disabled && !busy) onPick?.(fast ? 1 : 2); }}>
+      <b class="speedbtn__mul">${label}</b>
+      ${pending ? html`<span class="speedbtn__vote">${agreed.length}/${voters}</span>` : null}
+    </button>
+  <//>`;
+}
+
+/**
  * Solo pause / resume control (g.pause): pressed while paused.
  * @param {{ paused: boolean, busy?: boolean, onToggle: () => void }} props
  */
@@ -351,6 +377,7 @@ export function PauseButton({ paused, busy = false, onToggle }) {
  *   onReady:(r:boolean)=>void, readyBusy?:boolean, readyCount?:number, playerCount?:number,
  *   pen?:boolean, penAvail?:boolean, onPen?:(on:boolean)=>void, config?: any, frozenAt?: number|null,
  *   pause?: { show: boolean, paused: boolean, busy?: boolean, onToggle: () => void } | null,
+ *   speed?: { mul: 1|2, agreed?: string[], voters?: number, mine?: boolean, busy?: boolean, disabled?: boolean, onPick: (mul: 1|2) => void } | null,
  *   live?: { pending: number, unite: boolean, left?: number|null } | null,
  *   spectators?: any[]|null, myId?: any, isHost?: boolean, onRemoveSpectator?: ((playerId: any) => any)|null }} props
  *   spectators: the room's spectator seats (room.state) — the 观战席 capsule beside the latency (SpectatorPill; the host removes)
@@ -360,7 +387,7 @@ export function PauseButton({ paused, busy = false, onToggle }) {
  *     `left` (a leaker in 联防): its enemies still standing — the capsule's ×N tag
  */
 export function TopBar({ pub, priv, conn, hud, total, drawer, onExit, onDrawer, onReady, readyBusy, readyCount, playerCount, pen = false, penAvail = false, onPen = () => {},
-  config = null, frozenAt = null, pause = null, live = null, spectator = false,
+  config = null, frozenAt = null, pause = null, speed = null, live = null, spectator = false,
   spectators = null, myId = null, isHost = false, onRemoveSpectator = null, room = null }) {
   const phase = pub?.phase;
   const boss = isBossPhase(phase);
@@ -419,6 +446,7 @@ export function TopBar({ pub, priv, conn, hud, total, drawer, onExit, onDrawer, 
         ${frozenSecs != null
           ? html`<${Countdown} seconds=${frozenSecs} total=${total ?? undefined} size="md" label="PAUSED" />`
           : html`<${Countdown} deadline=${pub?.deadline} total=${total ?? undefined} size="md" />`}
+        ${speed ? html`<${SpeedButton} ...${speed} />` : null}
         ${pause && (pause.show || pause.paused) ? html`<${PauseButton} paused=${!!pause.paused} busy=${pause.busy} onToggle=${pause.onToggle} />` : null}
       </div>
       <${OvertimeWarning} ot=${ot} />
