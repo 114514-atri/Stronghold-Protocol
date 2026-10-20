@@ -1,0 +1,256 @@
+{
+  "id": "cc-beta",
+  "name": "危机合约β",
+  "mapId": "level_rune_01-03",
+  "stageUrl": "/crisis/data/stages/level_rune_01-03.json",
+  "mapName": "切尔诺伯格 · 59区废墟",
+  "desc": "切尔诺伯格分城区，因面积较小、缺乏战略意义而遭到废弃，现已被游荡的敌方单位占据，需阻止敌人穿越我方包围网。",
+  "stage": {
+    "deployLimit": 9,
+    "costInitial": 10,
+    "costMax": 99,
+    "lifePoint": 2,
+    "enemyCount": 59
+  },
+  "sources": [
+    "https://prts.wiki/w/切尔诺伯格_59区废墟",
+    "https://arknights.fandom.com/wiki/Area_59_Ruins/Contracts"
+  ],
+  "contracts": {
+    "support": [
+      {
+        "id": "jt_readiness",
+        "name": "协同战术：备战",
+        "risk": 0,
+        "desc": "所有我方单位的防御力增加50%，生命值增加100%"
+      },
+      {
+        "id": "jt_assault",
+        "name": "协同战术：突击",
+        "risk": 0,
+        "desc": "所有我方单位的攻击速度增加100",
+        "note": "β 第二周开放"
+      }
+    ],
+    "optional": [
+      {
+        "id": "oz_activation_1",
+        "group": "oz_activation",
+        "level": 1,
+        "name": "源石环境：活性 I",
+        "risk": 1,
+        "desc": "所有敌人的生命值提升25%"
+      },
+      {
+        "id": "oz_activation_2",
+        "group": "oz_activation",
+        "level": 2,
+        "name": "源石环境：活性 II",
+        "risk": 2,
+        "desc": "所有敌人的生命值提升60%"
+      },
+      {
+        "id": "oz_activation_3",
+        "group": "oz_activation",
+        "level": 3,
+        "name": "源石环境：活性 III",
+        "risk": 3,
+        "desc": "所有敌人的生命值提升150%"
+      },
+      {
+        "id": "oz_stimulus_1",
+        "group": "oz_stimulus",
+        "level": 1,
+        "name": "源石环境：刺激 I",
+        "risk": 1,
+        "desc": "所有敌人的攻击力提升15%"
+      },
+      {
+        "id": "oz_stimulus_2",
+        "group": "oz_stimulus",
+        "level": 2,
+        "name": "源石环境：刺激 II",
+        "risk": 2,
+        "desc": "所有敌人的攻击力提升35%"
+      },
+      {
+        "id": "oz_stimulus_3",
+        "group": "oz_stimulus",
+        "level": 3,
+        "name": "源石环境：刺激 III",
+        "risk": 3,
+        "desc": "所有敌人的攻击力提升80%"
+      },
+      {
+        "id": "anti_armor_1",
+        "group": "anti_armor",
+        "level": 1,
+        "name": "反装甲 I",
+        "risk": 1,
+        "desc": "所有敌人的防御力提升50%"
+      },
+      {
+        "id": "anti_mobility",
+        "group": "anti_mobility",
+        "level": 1,
+        "name": "反机动",
+        "risk": 1,
+        "desc": "所有敌人的移动速度提升50%"
+      },
+      {
+        "id": "anti_sniper_1",
+        "group": "anti_sniper",
+        "level": 1,
+        "name": "反狙击 I",
+        "risk": 1,
+        "desc": "所有敌人的攻击范围提升50%",
+        "note": "β 第二周开放"
+      },
+      {
+        "id": "obj_last_line",
+        "group": "obj_last_line",
+        "level": 1,
+        "name": "目标：最后防线",
+        "risk": 1,
+        "desc": "我方防御点可承受的敌方数量变为1"
+      },
+      {
+        "id": "obj_urgent",
+        "group": "obj_urgent",
+        "level": 1,
+        "name": "目标：应急合约",
+        "risk": 1,
+        "desc": "术师和医疗干员的部署费用提升至3倍"
+      },
+      {
+        "id": "obj_deep_1",
+        "group": "obj_deep",
+        "level": 1,
+        "name": "目标：深度渗透 I",
+        "risk": 1,
+        "desc": "部署费用的自然回复速度降低25%",
+        "note": "β 第二周开放"
+      },
+      {
+        "id": "obj_deep_2",
+        "group": "obj_deep",
+        "level": 2,
+        "name": "目标：深度渗透 II",
+        "risk": 2,
+        "desc": "部署费用的自然回复速度降低50%",
+        "note": "β 第二周开放"
+      },
+      {
+        "id": "obj_covert_1",
+        "group": "obj_covert",
+        "level": 1,
+        "name": "目标：隐秘行动 I",
+        "risk": 1,
+        "desc": "最多可编入10名干员进入作战（第13位助战位不受限）"
+      },
+      {
+        "id": "obj_covert_2",
+        "group": "obj_covert",
+        "level": 2,
+        "name": "目标：隐秘行动 II",
+        "risk": 2,
+        "desc": "最多可编入7名干员进入作战（第13位助战位不受限）"
+      },
+      {
+        "id": "obj_covert_3",
+        "group": "obj_covert",
+        "level": 3,
+        "name": "目标：隐秘行动 III",
+        "risk": 3,
+        "desc": "最多可编入4名干员进入作战（第13位助战位不受限）"
+      },
+      {
+        "id": "obj_dispatch_guard",
+        "group": "obj_dispatch",
+        "level": 2,
+        "name": "目标：战略调度（近卫重装）",
+        "risk": 2,
+        "desc": "禁止部署近卫和重装干员"
+      },
+      {
+        "id": "obj_dispatch_caster",
+        "group": "obj_dispatch",
+        "level": 2,
+        "name": "目标：战略调度（术师医疗）",
+        "risk": 2,
+        "desc": "禁止部署术师和医疗干员"
+      },
+      {
+        "id": "env_terrain_2",
+        "group": "env_terrain",
+        "level": 2,
+        "name": "环境：险峻地势 II",
+        "risk": 2,
+        "desc": "战场中的6个位置无法部署我方单位",
+        "blockedTiles": [[2, 3], [2, 4], [2, 5], [3, 6], [5, 5], [5, 7]]
+      },
+      {
+        "id": "env_terrain_3",
+        "group": "env_terrain",
+        "level": 3,
+        "name": "环境：险峻地势 III",
+        "risk": 3,
+        "desc": "战场中的10个位置无法部署我方单位",
+        "blockedTiles": [[1, 3], [1, 4], [2, 3], [2, 4], [2, 5], [2, 8], [3, 6], [4, 8], [5, 5], [5, 7]]
+      },
+      {
+        "id": "obj_blade_2",
+        "group": "obj_blade",
+        "level": 2,
+        "name": "目标：绞碎利刃 II",
+        "risk": 2,
+        "desc": "所有寻仇者与复仇者的防御力提升100%，生命值提升80%"
+      },
+      {
+        "id": "obj_blade_3",
+        "group": "obj_blade",
+        "level": 3,
+        "name": "目标：绞碎利刃 III",
+        "risk": 3,
+        "desc": "所有寻仇者与复仇者的防御力提升200%，生命值提升120%，攻击力提升80%"
+      },
+      {
+        "id": "obj_armed_2",
+        "group": "obj_armed",
+        "level": 2,
+        "name": "目标：破坏武装 II",
+        "risk": 2,
+        "desc": "所有武装人员的生命值提升80%，攻击力提升40%，法术抗性提升至50，重量提升两个等级",
+        "note": "β 第二周开放"
+      },
+      {
+        "id": "obj_armed_3",
+        "group": "obj_armed",
+        "level": 3,
+        "name": "目标：破坏武装 III",
+        "risk": 3,
+        "desc": "所有武装人员的生命值提升150%，攻击力提升80%，法术抗性提升至75，重量提升两个等级",
+        "note": "β 第二周开放"
+      },
+      {
+        "id": "oz_erosion_3",
+        "group": "oz_erosion",
+        "level": 3,
+        "name": "源石环境：侵蚀 III",
+        "risk": 3,
+        "desc": "所有我方单位的生命值上限降低75%",
+        "note": "β 第二周开放"
+      }
+    ]
+  },
+  "enemies": [
+    { "name": "轻甲卫兵", "count": 33 },
+    { "name": "寻仇者", "count": 4 },
+    { "name": "复仇者", "count": 2 },
+    { "name": "武装人员", "count": 5 },
+    { "name": "重装防御者", "count": 8 },
+    { "name": "隐形术师组长", "count": 7 }
+  ],
+  "squadSizeDefault": 12,
+  "note": "同组合约互斥（取最高等级一条）。支援合约风险为 0。战斗结算尚未接入。"
+}

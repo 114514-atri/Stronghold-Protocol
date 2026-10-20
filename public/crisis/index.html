@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>危机合约 · Contingency Contract</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="battleRoot" class="cc-battle-root" hidden></div>
+  <div id="app" class="cc">
+    <header class="cc-top">
+      <a class="cc-back" href="/">← 卫戍协议</a>
+      <div class="cc-brand">
+        <p class="cc-eyebrow">CONTINGENCY CONTRACT</p>
+        <h1>危机合约</h1>
+      </div>
+      <p class="cc-solo">单人 · 不可联机</p>
+    </header>
+
+    <section class="cc-panel cc-panel--season" id="seasonPanel">
+      <h2>行动期数</h2>
+      <div id="seasonList" class="cc-seasons"></div>
+    </section>
+
+    <section class="cc-panel cc-panel--map" id="mapPanel" hidden>
+      <div class="cc-maphead">
+        <div>
+          <h2 id="mapTitle"></h2>
+          <p id="mapDesc" class="cc-muted"></p>
+        </div>
+        <div id="mapStats" class="cc-stats"></div>
+      </div>
+    </section>
+
+    <section class="cc-panel cc-panel--contracts" id="contractPanel" hidden>
+      <div class="cc-panel__head">
+        <div class="cc-panel__titles">
+          <h2>合约选择</h2>
+          <p class="cc-muted cc-panel__lead">同组互斥 · 支援会使计分风险归零 · 隐秘行动只限主编队</p>
+        </div>
+        <div class="cc-riskbox" id="riskBox" title="计分风险；选取支援时显示为 0">
+          <span class="cc-riskbox__label">RISK</span>
+          <b class="cc-riskbox__val" id="riskBadge">0</b>
+          <span class="cc-riskbox__note" id="riskNote"></span>
+        </div>
+      </div>
+      <div class="cc-picked" id="pickedStrip" hidden>
+        <div class="cc-picked__label">已选</div>
+        <div class="cc-picked__list" id="pickedList"></div>
+        <button type="button" class="cc-picked__clear" id="btnClearContracts" title="清空全部合约">清空</button>
+      </div>
+      <div class="cc-contract-block">
+        <h3 class="cc-contract-h"><span>协同战术</span><em>支援</em></h3>
+        <div id="supportList" class="cc-tags cc-tags--support"></div>
+      </div>
+      <div class="cc-contract-block">
+        <h3 class="cc-contract-h"><span>可选合约</span><em id="optionalCount"></em></h3>
+        <div id="optionalList" class="cc-contract-groups"></div>
+      </div>
+    </section>
+
+    <section class="cc-panel cc-panel--squad" id="squadPanel" hidden>
+      <div class="cc-panel__head">
+        <h2>编队</h2>
+        <span id="squadCount" class="cc-squad-meta"></span>
+      </div>
+      <p class="cc-muted">主编队最多 12 人（受隐秘行动词条限制时更少）。第 13 位为助战位，可任意选用仓库干员，不受编队人数词条限制。</p>
+
+      <div class="cc-squad-dock">
+        <div class="cc-squad-dock__main">
+          <div class="cc-squad-dock__label">主编队 <span id="squadCapHint"></span></div>
+          <div id="squadSlots" class="cc-squad"></div>
+        </div>
+        <div class="cc-squad-dock__borrow">
+          <div class="cc-squad-dock__label">助战 · 第13位</div>
+          <div id="borrowSlot" class="cc-borrow-slot" title="点击后在仓库中选择助战干员" role="button" tabindex="0">
+            <span class="cc-borrow-slot__empty">+ 助战</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cc-squad-bar">
+        <div class="cc-pick-mode" id="pickMode">
+          <button type="button" class="cc-pick is-on" data-mode="squad">编入主队</button>
+          <button type="button" class="cc-pick" data-mode="borrow">选为助战</button>
+        </div>
+        <input id="opFilter" type="search" placeholder="搜索干员…" autocomplete="off" />
+        <select id="opProf">
+          <option value="">全部职业</option>
+        </select>
+        <button type="button" id="btnFillMax" class="cc-btn ghost">编队内全部满练</button>
+      </div>
+      <div id="opGrid" class="cc-op-grid"></div>
+    </section>
+
+    <section class="cc-panel" id="loadoutPanel" hidden>
+      <h2 id="loadoutTitle">干员练度</h2>
+      <form id="loadoutForm" class="cc-loadout"></form>
+    </section>
+
+    <footer class="cc-foot">
+      <div class="cc-foot__cta">
+        <button type="button" id="btnStart" class="cc-btn primary" disabled>开始行动</button>
+        <div class="cc-foot__meta">
+          <span id="footRisk" class="cc-foot__risk">风险 0</span>
+          <span id="footSquad" class="cc-foot__squad"></span>
+        </div>
+      </div>
+      <p id="statusLine" class="cc-status" role="status" aria-live="polite"></p>
+    </footer>
+  </div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
